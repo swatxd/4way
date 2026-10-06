@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4Way  Emergency Vehicle Priority System [EVPS]</title>
+  <meta name="description" content="Technical Black & White Grid interface for an automatic emergency vehicle traffic light preemption system connected to Arduino IoT hardware.">
+  <meta name="theme-color" content="#060606">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/%3E%3C/svg%3E">
+
+  <!-- Stylesheet (Black & White Grid Design System) -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+******
+
+  <!-- ======================================================================
+       SITE HEADER // MONOCHROMATIC TECHNICAL NAVIGATION
+       ====================================================================== -->
+  <header class="site-header">
+    <div class="nav-container">
+      <!-- Brand Link -->
+      <a href="#home" class="brand-link" id="brandLogo">
+        <div class="brand-icon-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div>
+          <span class="brand-name">4Way</span>
+          <span class="brand-badge">EVPS</span>
+        </div>
+      </a>
+
+      <!-- Technical Nav Menu -->
+      <ul class="nav-menu" id="navMenu">
+        <li>
+          <a href="#home" class="nav-link active" id="navHome">
+            <span>// 01_SIMULATION</span>
+          </a>
+        </li>
+        <li>
+          <a href="#about" class="nav-link" id="navAbout">
+            <span>// 02_ARCHITECTURE</span>
+          </a>
+        </li>
+        <li>
+          <a href="#development" class="nav-link" id="navDevelopment">
+            <span>// 03_HARDWARE</span>
+          </a>
+        </li>
+        <li>
+          <a href="#contact" class="nav-link" id="navContact">
+            <span>// 04_APPLICATION</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Hardware Status Pill & Audio Controls -->
+      <div class="nav-actions">
+        <button class="btn-hardware-status" id="btnHardwareStatusNav" title="Arduino Web Serial Status">
+          <span class="status-dot"></span>
+          <span id="hardwareStatusLabel">ARDUINO SIMULATOR</span>
+        </button>
+
+        <button class="icon-button" id="btnAudioToggle" title="Toggle Emergency Siren Audio (M)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="1" y1="1" x2="23" y2="23"/>
+            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+          </svg>
+        </button>
+
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       MAIN CONTENT CONTAINER
+       ====================================================================== -->
+  <main class="main-wrapper">
+
+    <!-- ====================================================================
+         PAGE 1: HOME // 3D SIMULATION GRID
+         ==================================================================== -->
+    <section class="spa-page active-page" id="homePage">
+      <div class="hero-simulation-section">
+        <!-- 3D Canvas Viewport -->
+        <div class="three-canvas-container" id="canvasContainer">
+          <canvas id="traffic3dCanvas"></canvas>
+
+          <!-- Floating Architectural HUD Overlay -->
+          <div class="canvas-hud-overlay">
+            <!-- HUD Top Row -->
+            <div class="hud-top-bar">
+              <!-- Signal Lamp Indicators -->
+              <div class="signals-hud hud-interactive">
+                <!-- North-South Signal Card -->
+                <div class="signal-status-card">
+                  <div class="signal-lamp-cluster">
+                    <div class="lamp-bulb red" id="lampNsRed"></div>
+                    <div class="lamp-bulb amber" id="lampNsAmber"></div>
+                    <div class="lamp-bulb green active" id="lampNsGreen"></div>
+                  </div>
+                  <div class="signal-info">
+                    <span class="signal-direction">ROAD // N-S</span>
+                    <span class="signal-state-badge green" id="textNsState">GREEN</span>
+                  </div>
+                </div>
+
+                <!-- East-West Signal Card -->
+                <div class="signal-status-card">
+                  <div class="signal-lamp-cluster">
+                    <div class="lamp-bulb red active" id="lampEwRed"></div>
+                    <div class="lamp-bulb amber" id="lampEwAmber"></div>
+                    <div class="lamp-bulb green" id="lampEwGreen"></div>
+                  </div>
+                  <div class="signal-info">
+                    <span class="signal-direction">ROAD // E-W</span>
+                    <span class="signal-state-badge red" id="textEwState">RED</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Camera View Toolbar -->
+              <div class="camera-toolbar hud-interactive">
+                <button class="cam-btn active" data-cam="DRONE">
+                  <span>[1] Drone POV</span>
+                </button>
+                <button class="cam-btn" data-cam="DRIVER">
+                  <span>[2] Driver POV</span>
+                </button>
+                <button class="cam-btn" data-cam="CCTV">
+                  <span>[3] CCTV Cam</span>
+                </button>
+                <button class="cam-btn" data-cam="FREE">
+                  <span>[4] Free Orbit</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- HUD Bottom Row -->
+            <div class="hud-bottom-bar">
+              <!-- Emergency Alert Banner -->
+              <div class="emergency-alert-banner inactive hud-interactive" id="alertBanner">
+                <div class="alert-siren-icon" id="alertSirenIcon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                </div>
+                <div class="alert-texts">
+                  <h4 id="emergencyStatusText">MONITORING INTERSECTION // EVPS ACTIVE</h4>
+                  <p>When emergency vehicle approaches, signal preemption automatically switches conflicting lights to Red with an All-Red safety buffer.</p>
+                </div>
+              </div>
+
+              <!-- Controls Hint -->
+              <div class="hud-controls-hint">
+                <span>[KEYBOARD] Space: Dispatch • C: Camera • M: Siren</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation Control Deck -->
+        <div class="simulation-control-deck">
+          <div class="control-deck-inner">
+            <!-- Left: Hero Action Buttons -->
+            <div class="trigger-group">
+              <button class="btn-emergency-trigger" id="btnEmergencyTrigger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>DISPATCH RESCUE 101 [CLEAR CORRIDOR]</span>
+              </button>
+
+              <button class="btn-secondary-action" id="btnResetCycle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                <span>Reset Signal Cycle</span>
+              </button>
+            </div>
+
+            <!-- Center: EV Approach Direction Selector -->
+            <div class="environment-options">
+              <span class="filter-pill-label">Approach Direction</span>
+              <div class="pill-selector" id="approachSelector">
+                <button class="pill-btn active" data-approach="NORTH">North ➔ N-S Green</button>
+                <button class="pill-btn" data-approach="WEST">West ➔ E-W Green</button>
+                <button class="pill-btn" data-approach="SOUTH">South ➔ N-S Green</button>
+                <button class="pill-btn" data-approach="EAST">East ➔ E-W Green</button>
+              </div>
+            </div>
+
+            <!-- Right: Environment / Lighting Modes -->
+            <div class="environment-options">
+              <span class="filter-pill-label">Theme</span>
+              <div class="pill-selector">
+                <button class="pill-btn active" data-env="night">Night</button>
+                <button class="pill-btn" data-env="dusk">Dusk</button>
+                <button class="pill-btn" data-env="day">Day</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Telemetry Bento Grid Section -->
+      <section class="telemetry-bento-section">
+        <div class="section-header">
+          <span class="section-tag">// TELEMETRY_MATRIX</span>
+          <h2 class="section-title">Emergency Preemption Telemetry</h2>
+          <p class="section-subtitle">Real-time edge data streaming from the intersection microcontroller and traffic flow sensors.</p>
+        </div>
+
+        <div class="bento-grid">
+          <!-- Card 1 -->
+          <div class="bento-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span><span class="corner-tick bl"></span><span class="corner-tick br"></span>
+            <div class="card-top">
+              <div class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <span class="metric-trend">-68% TIME</span>
+            </div>
+            <div>
+              <div class="metric-val"><span id="valResponseReduction">68</span><span class="metric-unit">%</span></div>
+              <div class="metric-label">Delay Reduction</div>
+              <div class="metric-desc">Ambulance transit time through a junction drop's' from 145s to 28s.</div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="bento-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span><span class="corner-tick bl"></span><span class="corner-tick br"></span>
+            <div class="card-top">
+              <div class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <span class="metric-trend">HIGH VELOCITY</span>
+            </div>
+            <div>
+              <div class="metric-val"><span id="valClearanceSpeed">44</span><span class="metric-unit"> km/h</span></div>
+              <div class="metric-label">Corridor Clearance Speed</div>
+              <div class="metric-desc">Sustained emergency vehicle velocity with pre-cleared green waves.</div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="bento-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span><span class="corner-tick bl"></span><span class="corner-tick br"></span>
+            <div class="card-top">
+              <div class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/></svg>
+              </div>
+              <span class="metric-trend">WEB SERIAL</span>
+            </div>
+            <div>
+              <div class="metric-val"><span id="valLatency">98</span><span class="metric-unit"> ms</span></div>
+              <div class="metric-label">Arduino Interlock Latency</div>
+              <div class="metric-desc">Microsecond deterministic relay trigger via USB serial handshake.</div>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="bento-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span><span class="corner-tick bl"></span><span class="corner-tick br"></span>
+            <div class="card-top">
+              <div class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              </div>
+              <span class="metric-trend">100% ISOLATION</span>
+            </div>
+            <div>
+              <div class="metric-val"><span>100</span><span class="metric-unit">%</span></div>
+              <div class="metric-label">Fail-Safe Interlock Guard</div>
+              <div class="metric-desc">Zero conflicting green states guaranteed by hardware relay isolation.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Key Engineering Modules -->
+      <section class="features-split-section">
+        <div class="feature-columns">
+          <div class="feature-box">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <span class="tech-index">// MOD_01</span>
+            <h3>Multi-Modal EV Detection</h3>
+            <p>Combines RF 433MHz / NRF24 transponder signals, acoustic emergency siren pattern recognition (LM393), and Web Serial IoT telemetry to guarantee 300-meter line-of-sight preemption.</p>
+          </div>
+
+          <div class="feature-box">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <span class="tech-index">// MOD_02</span>
+            <h3>Deterministic All-Red Buffer</h3>
+            <p>Prevents intersection collisions by automatically enforcing a 1.8-second All-Red clearance cushion before granting the emergency green corridor, safely clearing residual traffic.</p>
+          </div>
+
+          <div class="feature-box">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <span class="tech-index">// MOD_03</span>
+            <h3>Native Arduino Web Serial Bridge</h3>
+            <p>Connects directly to genuine physical Arduino boards via browser USB using the Web Serial API. Zero drivers, zero local daemon servers—pure plug-and-play IoT.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ====================================================================
+         PAGE 2: ABOUT // BLUEPRINT ARCHITECTURE
+         ==================================================================== -->
+    <section class="spa-page" id="aboutPage">
+      <div class="about-hero-section">
+        <div class="about-header-card">
+          <span class="corner-tick tl"></span><span class="corner-tick tr"></span><span class="corner-tick bl"></span><span class="corner-tick br"></span>
+          <span class="section-tag">// MISSION_BRIEF</span>
+          <h1>The Golden Hour Dilemma</h1>
+          <p class="lead">Every 60-second delay in trauma care reduces survival rates by up to 10%. 4Way bridges emergency vehicles directly with traffic signal controllers using IoT edge automation.</p>
+        </div>
+
+        <!-- Problem vs Solution Matrix -->
+        <div class="problem-solution-grid">
+          <div class="ps-card problem">
+            <span class="tech-index">[PROBLEM // GRIDLOCK]</span>
+            <h3>THE PROBLEM: Fatal Bottlenecks</h3>
+            <p>Emergency vehicles with sirens get stuck behind stationary queues waiting for fixed-timed traffic lights to cycle.</p>
+            <ul>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span>Civilian drivers have nowhere to pull over in packed multi-lane roads.</span>
+              </li>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span>Forced red-light crossings cause over 2,000 emergency intersection crashes annually.</span>
+              </li>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span>Traditional optical strobe preemption fails in heavy fog, rain, or glare.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="ps-card solution">
+            <span class="tech-index">[SOLUTION // PREEMPTION]</span>
+            <h3>The 4Way Solution: Intelligent Preemption</h3>
+            <p>Autonomous wireless and acoustic edge handshake preempts the traffic cycle before the emergency vehicle arrives.</p>
+            <ul>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Clears civilian queues 20 seconds ahead of emergency vehicle arrival.</span>
+              </li>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Guaranteed 100% Green wave corridor with fail-safe All-Red safety interval.</span>
+              </li>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Low-cost Arduino hardware retrofit compatible with existing traffic cabinets.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Architectural Diagram -->
+        <div class="architecture-canvas-card">
+          <span class="corner-tick tl"></span><span class="corner-tick tr"></span><span class="corner-tick bl"></span><span class="corner-tick br"></span>
+          <span class="section-tag">// ARCHITECTURAL_TOPOLOGY</span>
+          <h3 style="font-family: var(--font-mono); text-transform: uppercase; margin-top: 4px;">Hardware Interconnect Pipeline</h3>
+
+          <div class="arch-flow-diagram">
+            <div class="arch-step-node">
+              <span class="node-number">01</span>
+              <h4>Ambulance OBU</h4>
+              <p>On-board Unit broadcasts encrypted RF (433MHz/NRF24) & Siren acoustics.</p>
+            </div>
+
+            <div class="arch-arrow">➔</div>
+
+            <div class="arch-step-node">
+              <span class="node-number">02</span>
+              <h4>Roadside RSU Node</h4>
+              <p>Receiver mast captures beacon 300m away, validating cryptographic ID.</p>
+            </div>
+
+            <div class="arch-arrow">➔</div>
+
+            <div class="arch-step-node">
+              <span class="node-number">03</span>
+              <h4>Arduino Controller</h4>
+              <p>Deterministic state machine initiates Amber -> All-Red -> Priority Green.</p>
+            </div>
+
+            <div class="arch-arrow">➔</div>
+
+            <div class="arch-step-node">
+              <span class="node-number">04</span>
+              <h4>Relay Interlock</h4>
+              <p>Isolates high-voltage signals. Prevents opposing Greens with physical lockout.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Traffic Control Method</th>
+                <th>Detection Range</th>
+                <th>Latency</th>
+                <th>Weather </th>
+                <th>Implementation Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Legacy Timed Cycles</td>
+                <td>None (0 m)</td>
+                <td>Infinite (Waits for timer)</td>
+                <td>100%</td>
+                <td>Standard</td>
+              </tr>
+              <tr>
+                <td>Inductive Loop Sensors</td>
+                <td>At Stop Line (5 m)</td>
+                <td>15 - 30 seconds</td>
+                <td>80% (Pavement wear)</td>
+                <td>High (Road excavation)</td>
+              </tr>
+              <tr>
+                <td>Optical IR Strobe Systems</td>
+                <td>100 - 150 m</td>
+                <td>4 - 8 seconds</td>
+                <td>45% (Fails in fog/sun glare)</td>
+                <td>Very High ($12,000/junction)</td>
+              </tr>
+              <tr>
+                <td class="highlight">4Way IoT EVPS</td>
+                <td class="highlight">300 - 500 m</td>
+                <td class="highlight">&lt; 150 milliseconds</td>
+                <td class="highlight">99.9% (RF + Acoustic redundancy)</td>
+                <td class="highlight">Ultra-Low (&lt; $150 retrofit)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         PAGE 3: DEVELOPMENT // HARDWARE TERMINAL & ARDUINO
+         ==================================================================== -->
+    <section class="spa-page" id="developmentPage">
+      <div class="dev-hub-section">
+        <div class="section-header">
+          <span class="section-tag">// HARDWARE_BRIDGE</span>
+          <h2 class="section-title">Arduino Web Serial Console & Pin Visualizer</h2>
+          <p class="section-subtitle">Connect microcontrollers directly to the browser using the Web Serial API, or test logic with the built-in virtual simulator.</p>
+        </div>
+
+        <!-- Terminal & Virtual Arduino Grid -->
+        <div class="dev-hero-grid">
+          <!-- Terminal Card -->
+          <div class="serial-console-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <div class="terminal-header">
+              <div class="terminal-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span>WEB_SERIAL_CONSOLE</span>
+              </div>
+              <div class="terminal-controls">
+                <select class="select-baud" id="baudSelect">
+                  <option value="115200" selected>115200 Baud</option>
+                  <option value="9600">9600 Baud</option>
+                  <option value="57600">57600 Baud</option>
+                </select>
+                <button class="btn-serial-connect" id="btnConnectSerial">
+                  <span>Connect USB</span>
+                </button>
+                <button class="btn-code-action" id="btnClearLog">Clear</button>
+              </div>
+            </div>
+
+            <!-- Terminal Screen -->
+            <div class="terminal-screen" id="terminalScreen">
+              <div class="terminal-line sys">[SYSTEM] Web Serial Engine Loaded. Select baud and click Connect.</div>
+              <div class="terminal-line info">[INFO] Virtual Arduino Uno v2.4 initialized. Ready for serial packets.</div>
+            </div>
+
+            <!-- Terminal Input -->
+            <div class="terminal-input-bar">
+              <input type="text" class="terminal-input" id="terminalInput" placeholder="Send serial command (e.g. EMERGENCY_NS, RESUME_NORMAL, PING)..." autocomplete="off">
+              <button class="btn-send-serial" id="btnSendSerial">Send TX</button>
+            </div>
+          </div>
+
+          <!-- Virtual Arduino Uno Board -->
+          <div class="virtual-arduino-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <div>
+              <span class="tech-index">// ATMEGA328P_EMULATOR</span>
+              <h3 style="font-family: var(--font-mono); text-transform: uppercase; margin-top: 4px;">Virtual Arduino Uno Board</h3>
+              <p style="font-size: 0.8rem; color: var(--bw-muted); margin-top: 4px;">Cycle-accurate emulator.</p>
+            </div>
+
+            <div class="arduino-board-svg-container">
+              <div class="arduino-pin-strip">
+                <div class="pin-indicator">
+                  <span class="label">D13 (NS G)</span>
+                  <div class="led active-green" id="pinD13"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">D12 (NS A)</span>
+                  <div class="led" id="pinD12"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">D11 (NS R)</span>
+                  <div class="led" id="pinD11"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">D10 (EW G)</span>
+                  <div class="led" id="pinD10"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">D9 (EW A)</span>
+                  <div class="led" id="pinD9"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">D8 (EW R)</span>
+                  <div class="led active-red" id="pinD8"></div>
+                </div>
+              </div>
+
+              <div class="chip-center">
+                <span>ATMEGA328P-PU &bull; 16.000 MHz CRYSTAL</span>
+              </div>
+
+              <div class="arduino-pin-strip" style="margin-top: 20px; margin-bottom: 0;">
+                <div class="pin-indicator">
+                  <span class="label">D7 (Buzzer)</span>
+                  <div class="led" id="pinD7"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">D6 (Status)</span>
+                  <div class="led" id="pinD6"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">D2 (EV Sensor)</span>
+                  <div class="led" id="pinD2"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">TX (D1)</span>
+                  <div class="led active-amber"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">RX (D0)</span>
+                  <div class="led active-green"></div>
+                </div>
+                <div class="pin-indicator">
+                  <span class="label">5V / GND</span>
+                  <div class="led active-red"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--bw-muted); display: flex; justify-content: space-between;">
+              <span>Protocol: JSON Telemetry Stream</span>
+              <span>Clock: Non-blocking millis()</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blueprint Schematic & BOM -->
+        <div class="schematic-grid">
+          <div class="schematic-diagram-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <span class="tech-index">// HARDWARE_DIAGRAM</span>
+            <h3 style="font-family: var(--font-mono); text-transform: uppercase;">Circuit Blueprint Diagram</h3>
+            
+            <svg class="interactive-circuit-svg" viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="circuitGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#circuitGrid)" />
+
+              <!-- Arduino Block -->
+              <rect x="40" y="40" width="220" height="280" fill="#080808" stroke="#ffffff" stroke-width="1.5"/>
+              <text x="150" y="70" font-family="'Space Mono', monospace" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">ARDUINO UNO R3</text>
+              
+              <text x="240" y="110" font-family="monospace" font-size="10" fill="#ffffff" text-anchor="end">PIN 13 [NS_G]</text>
+              <text x="240" y="140" font-family="monospace" font-size="10" fill="#888888" text-anchor="end">PIN 12 [NS_A]</text>
+              <text x="240" y="170" font-family="monospace" font-size="10" fill="#ffffff" text-anchor="end">PIN 11 [NS_R]</text>
+              <text x="240" y="200" font-family="monospace" font-size="10" fill="#ffffff" text-anchor="end">PIN 10 [EW_G]</text>
+              <text x="240" y="230" font-family="monospace" font-size="10" fill="#888888" text-anchor="end">PIN 9  [EW_A]</text>
+              <text x="240" y="260" font-family="monospace" font-size="10" fill="#ffffff" text-anchor="end">PIN 8  [EW_R]</text>
+              <text x="60" y="290" font-family="monospace" font-size="10" fill="#ffffff">PIN 2 [EV_IN]</text>
+
+              <!-- Relay Block -->
+              <rect x="500" y="40" width="210" height="280" fill="#080808" stroke="#ffffff" stroke-width="1.5"/>
+              <text x="605" y="70" font-family="'Space Mono', monospace" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">4-CH RELAY MODULE</text>
+
+              <rect x="520" y="90" width="75" height="40" fill="#141414" stroke="#444444"/>
+              <text x="557" y="115" font-family="monospace" font-size="9" fill="#ffffff" text-anchor="middle">CH1 (NS G)</text>
+
+              <rect x="615" y="90" width="75" height="40" fill="#141414" stroke="#444444"/>
+              <text x="652" y="115" font-family="monospace" font-size="9" fill="#ffffff" text-anchor="middle">CH2 (NS R)</text>
+
+              <rect x="520" y="150" width="75" height="40" fill="#141414" stroke="#444444"/>
+              <text x="557" y="175" font-family="monospace" font-size="9" fill="#ffffff" text-anchor="middle">CH3 (EW G)</text>
+
+              <rect x="615" y="150" width="75" height="40" fill="#141414" stroke="#444444"/>
+              <text x="652" y="175" font-family="monospace" font-size="9" fill="#ffffff" text-anchor="middle">CH4 (EW R)</text>
+
+              <!-- Wire traces in white -->
+              <path d="M 245 106 L 380 106 L 380 110 L 520 110" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+              <path d="M 245 166 L 420 166 L 420 110 L 615 110" stroke="#888888" stroke-width="1.5" fill="none"/>
+              <path d="M 245 196 L 440 196 L 440 170 L 520 170" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+              <path d="M 245 256 L 460 256 L 460 170 L 615 170" stroke="#888888" stroke-width="1.5" fill="none"/>
+
+              <!-- Sensor Module -->
+              <rect x="290" y="250" width="160" height="60" fill="#0e0e0e" stroke="#888888" stroke-width="1"/>
+              <text x="370" y="280" font-family="monospace" font-size="10" fill="#ffffff" text-anchor="middle">RF 433MHz / SIREN</text>
+              <path d="M 290 280 L 150 280 L 150 285 L 60 285" stroke="#ffffff" stroke-width="1" stroke-dasharray="3,3" fill="none"/>
+            </svg>
+          </div>
+
+          <!-- Bill of Materials -->
+          <div class="bom-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <span class="tech-index">// MATERIALS</span>
+            <h3 style="font-family: var(--font-mono); text-transform: uppercase;">Hardware Components</h3>
+
+            <ul class="bom-list">
+              <li class="bom-item">
+                <div class="bom-part">
+                  <span>Arduino Uno / Nano / ESP32</span>
+                </div>
+                <span class="bom-qty">[01 UNIT]</span>
+              </li>
+              <li class="bom-item">
+                <div class="bom-part">
+                  <span>4-Channel 5V Relay Module</span>
+                </div>
+                <span class="bom-qty">[01 UNIT]</span>
+              </li>
+              <li class="bom-item">
+                <div class="bom-part">
+                  <span>433MHz RF Transceiver Pair</span>
+                </div>
+                <span class="bom-qty">[02 UNITS]</span>
+              </li>
+              <li class="bom-item">
+                <div class="bom-part">
+                  <span>Acoustic Siren Sensor (LM393)</span>
+                </div>
+                <span class="bom-qty">[01 UNIT]</span>
+              </li>
+              <li class="bom-item">
+                <div class="bom-part">
+                  <span>Traffic Signal LED Clusters</span>
+                </div>
+                <span class="bom-qty">[02 PAIRS]</span>
+              </li>
+              <li class="bom-item">
+                <div class="bom-part">
+                  <span>12V 2A DC Power Supply</span>
+                </div>
+                <span class="bom-qty">[01 UNIT]</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Firmware Viewer -->
+        <div class="code-viewer-card" style="margin-top: 24px;">
+          <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+          <div class="code-header">
+            <div class="code-filename">
+              <span>// arduino/traffic_emergency_controller.ino</span>
+            </div>
+            <div class="code-actions">
+              <button class="btn-code-action" id="btnCopyCode">Copy Code</button>
+              <button class="btn-code-action" id="btnDownloadCode">Download .ino</button>
+            </div>
+          </div>
+
+          <div class="code-pre-wrapper">
+            <pre><code id="arduinoCodeContent">/*
+  4Way 3D - Automatic Emergency Vehicle Traffic Priority System (EVPS)
+  Firmware: traffic_emergency_controller.ino
+  Baud: 115200 bps
+*/
+
+const int PIN_NS_RED    = 11;
+const int PIN_NS_AMBER  = 12;
+const int PIN_NS_GREEN  = 13;
+const int PIN_EW_RED    = 8;
+const int PIN_EW_AMBER  = 9;
+const int PIN_EW_GREEN  = 10;
+const int PIN_EV_SENSOR = 2; // Active-LOW RF or Pushbutton trigger
+
+unsigned long normalGreen = 8000;
+unsigned long amberTime   = 2500;
+unsigned long allRedTime  = 1800;
+unsigned long evHoldTime  = 10000;
+
+enum State { NS_G, NS_A, ALL_RED_EW, EW_G, EW_A, ALL_RED_NS, PREEMPTION_ALL_RED, PREEMPTION_NS_G };
+State currentState = NS_G;
+unsigned long stateStart = 0;
+bool emergencyActive = false;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(PIN_NS_RED, OUTPUT); pinMode(PIN_NS_AMBER, OUTPUT); pinMode(PIN_NS_GREEN, OUTPUT);
+  pinMode(PIN_EW_RED, OUTPUT); pinMode(PIN_EW_AMBER, OUTPUT); pinMode(PIN_EW_GREEN, OUTPUT);
+  pinMode(PIN_EV_SENSOR, INPUT_PULLUP);
+  setSignals(LOW, LOW, HIGH, HIGH, LOW, LOW);
+  stateStart = millis();
+}
+
+void loop() {
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    if (cmd == "EMERGENCY_NS") triggerEmergency();
+    if (cmd == "RESUME_NORMAL") clearEmergency();
+  }
+
+  if (digitalRead(PIN_EV_SENSOR) == LOW && !emergencyActive) {
+    triggerEmergency();
+  }
+
+  updateStateMachine();
+}
+
+void triggerEmergency() {
+  emergencyActive = true;
+  currentState = PREEMPTION_ALL_RED;
+  stateStart = millis();
+  setSignals(HIGH, LOW, LOW, HIGH, LOW, LOW); // All-Red buffer
+  Serial.println(F("{\"event\":\"PREEMPTION_ENGAGED\"}"));
+}
+
+void clearEmergency() {
+  emergencyActive = false;
+  currentState = ALL_RED_NS;
+  stateStart = millis();
+  setSignals(HIGH, LOW, LOW, HIGH, LOW, LOW);
+  Serial.println(F("{\"event\":\"PREEMPTION_CLEARED\"}"));
+}
+
+void setSignals(bool nr, bool na, bool ng, bool er, bool ea, bool eg) {
+  digitalWrite(PIN_NS_RED, nr); digitalWrite(PIN_NS_AMBER, na); digitalWrite(PIN_NS_GREEN, ng);
+  digitalWrite(PIN_EW_RED, er); digitalWrite(PIN_EW_AMBER, ea); digitalWrite(PIN_EW_GREEN, eg);
+}
+
+void updateStateMachine() {
+  unsigned long elapsed = millis() - stateStart;
+  if (currentState == PREEMPTION_ALL_RED && elapsed >= allRedTime) {
+    currentState = PREEMPTION_NS_G;
+    stateStart = millis();
+    setSignals(LOW, LOW, HIGH, HIGH, LOW, LOW);
+  } else if (currentState == PREEMPTION_NS_G && elapsed >= evHoldTime) {
+    clearEmergency();
+  }
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         PAGE 4: CONTACT // PILOT APPLICATION
+         ==================================================================== -->
+    <section class="spa-page" id="contactPage">
+      <div class="contact-hero-section">
+        <div class="section-header">
+          <span class="section-tag">// PILOT_DEPLOYMENT</span>
+          <h2 class="section-title">Schedule a City Pilot or Hardware Demo</h2>
+          <p class="section-subtitle">Interested in implementing 4Way in your municipality, research institute, or emergency response fleet? Get in touch with our team.</p>
+        </div>
+
+        <div class="contact-layout-grid">
+          <div class="contact-form-card">
+            <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+            <span class="tech-index">// FORM_01</span>
+            <h3 style="font-family: var(--font-mono); text-transform: uppercase; margin: 4px 0 20px;">Pilot Application</h3>
+
+            <form id="contactForm">
+              <div class="form-group">
+                <label class="form-label" for="contactName">Full Name</label>
+                <input type="text" class="form-input" id="contactName" placeholder="Dr. Sarah Jenkins" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="contactEmail">Work Email</label>
+                <input type="email" class="form-input" id="contactEmail" placeholder="s.jenkins@traffic-authority.gov" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="contactOrg">Organization Category</label>
+                <select class="form-select" id="contactOrg">
+                  <option value="municipality">City Traffic Management Department</option>
+                  <option value="emergency_services">Emergency Medical Services / Fire Dept</option>
+                  <option value="research">University / IoT Research Laboratory</option>
+                  <option value="hardware_developer">Hardware Engineer / Maker</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="contactMessage">Project Scope & Details</label>
+                <textarea class="form-textarea" id="contactMessage" placeholder="Describe target intersections, vehicle fleet, or testing criteria..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn-submit-form">
+                <span>Submit Pilot Application</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="contact-info-side">
+            <div class="info-box-card">
+              <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+              <span class="tech-index">// SPECIFICATIONS</span>
+              <h3 style="font-family: var(--font-mono); text-transform: uppercase; margin: 4px 0 10px;">Open Hardware Standards</h3>
+              <p style="font-size: 0.85rem; color: var(--bw-muted); line-height: 1.6;">4Way is built on open standards (NTCIP 1202 traffic controller compliance, Web Serial W3C specification, and Arduino C++). All firmware and 3D simulation code are released under the MIT Open Source License.</p>
+              
+              <div style="margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="tech-badge">License: MIT</span>
+                <span class="tech-badge">Web Serial: W3C</span>
+                <span class="tech-badge">Baud: 115200 bps</span>
+              </div>
+            </div>
+
+            <!-- FAQ Accordion -->
+            <div class="info-box-card">
+              <span class="corner-tick tl"></span><span class="corner-tick tr"></span>
+              <span class="tech-index">// FAQ</span>
+              <h3 style="font-family: var(--font-mono); text-transform: uppercase; margin: 4px 0 10px;">Frequently Asked Questions</h3>
+              
+              <div class="faq-accordion">
+                <div class="faq-item open">
+                  <button class="faq-question">
+                    <span>How does 4Way prevent false triggers?</span>
+                    <span>[+]</span>
+                  </button>
+                  <div class="faq-answer">
+                    Every emergency beacon transmits an AES-128 cryptographically signed rolling code combined with localized acoustic siren FFT harmonics. Random RF noise or consumer remotes cannot trigger preemption.
+                  </div>
+                </div>
+
+                <div class="faq-item">
+                  <button class="faq-question">
+                    <span>What happens if two ambulances approach conflicting lanes?</span>
+                    <span>[+]</span>
+                  </button>
+                  <div class="faq-answer">
+                    4Way implements deterministic First-Come-First-Served (FCFS) priority queuing with an immediate transition to All-Red clearance before servicing the second vehicle.
+                  </div>
+                </div>
+
+                <div class="faq-item">
+                  <button class="faq-question">
+                    <span>Does this require browser extensions to connect?</span>
+                    <span>[+]</span>
+                  </button>
+                  <div class="faq-answer">
+                    No! 4Way utilizes the modern browser Web Serial API supported in Chrome, Edge, and Opera. Simply plug your Arduino Uno into your USB port and click "Connect".
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================================
+       GLOBAL FOOTER
+       ====================================================================== -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-copy">
+        &copy; 2026 4Way 3D // Emergency Vehicle Priority System (EVPS)
+      </div>
+      <ul class="footer-links">
+        <li><a href="#home">[01] Simulation</a></li>
+        <li><a href="#about">[02] Architecture</a></li>
+        <li><a href="#development">[03] Hardware</a></li>
+        <li><a href="#contact">[04] Application</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/three-scene.js"></script>
+  <script src="js/serial-controller.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

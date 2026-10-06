@@ -1,0 +1,39 @@
+  <!-- ======================================================================
+       OPENING BOOT TRANSITION // SWISS GRID ARCHITECTURAL SHUTTER
+       ====================================================================== -->
+  <div class="site-intro-curtain" id="siteIntroCurtain" aria-hidden="false">
+    <div class="intro-grid-overlay"></div>
+    <div class="intro-card">
+      <div class="intro-card-header">
+        <span class="intro-code">// SYSTEM_BOOT // EVPS.CORE.OS v2.6.4</span>
+        <span class="intro-badge">INITIALIZING</span>
+      </div>
+
+      <div class="intro-title-group">
+        <span class="intro-meta">AUTOMATIC TRAFFIC SIGNAL PREEMPTION MATRIX</span>
+        <h1 class="intro-title">4WAY <span>3D</span></h1>
+      </div>
+
+      <div class="intro-progress-track">
+        <div class="intro-progress-fill" id="introProgressFill"></div>
+      </div>
+
+      <div class="intro-info-row">
+        <span id="introStepLabel">CALIBRATING 4-WAY INTERSECTION SENSORS...</span>
+        <span id="introPercentLabel" class="mono-num">0%</span>
+      </div>
+
+      <div class="intro-log-box">
+        <div class="log-line">> THREE.JS SHADER & DEPTH PIPELINE: ONLINE</div>
+        <div class="log-line">> 4-WAY APPROACH VECTOR INTERLOCK: ARMED</div>
+        <div class="log-line">> WEB SERIAL ARDUINO BRIDGE: READY</div>
+      </div>
+
+      <div class="intro-actions">
+        <button class="intro-skip-btn" id="introEnterBtn">
+          <span>ENTER INTERSECTION [SPACE / CLICK]</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
